@@ -1,253 +1,301 @@
-/* --- CSS VARIABLES --- */
+/* =========================================
+   1. VARIABLES & THEME CONFIGURATION
+   ========================================= */
 :root {
-  /* DEFAULT: DARK MODE */
+  /* DARK MODE (DEFAULT) */
   --bg-core: #050505;
-  --bg-gradient: radial-gradient(circle at center, #1a001a 0%, #000000 80%);
-  --hud-bg: rgba(20, 10, 20, 0.85);
-  --hud-border: rgba(255, 50, 100, 0.2);
+  --bg-gradient: radial-gradient(circle at 50% 30%, #1a0510 0%, #000000 90%);
+  
+  /* Glassmorphism Colors */
+  --hud-bg: rgba(18, 18, 18, 0.75);
+  --hud-border: rgba(255, 255, 255, 0.08);
+  --hud-blur: 25px; /* Blur lebih kuat untuk Desktop */
+  
+  /* Brand Colors */
   --accent-primary: #ff0055; 
-  --accent-secondary: #bd00ff; 
+  --accent-glow: rgba(255, 0, 85, 0.5);
+  --accent-secondary: #bd00ff;
+  
+  /* Text Colors */
   --text-main: #ffffff;
-  --text-dim: #b0b0b0;
-  --user-msg-bg: rgba(255, 0, 85, 0.2);
-  --user-msg-border: rgba(255, 0, 85, 0.5);
-  --ai-msg-bg: rgba(30, 20, 30, 0.9);
+  --text-secondary: #e0e0e0;
+  --text-dim: #888888;
+  
+  /* Chat Bubbles */
+  --user-msg-bg: linear-gradient(135deg, rgba(255, 0, 85, 0.25), rgba(189, 0, 255, 0.15));
+  --user-msg-border: rgba(255, 0, 85, 0.3);
+  --ai-msg-bg: rgba(255, 255, 255, 0.05);
+  --ai-msg-border: rgba(255, 255, 255, 0.06);
+
+  /* Spacing & Safe Areas */
+  --safe-top: env(safe-area-inset-top, 20px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
 }
 
-/* LIGHT MODE */
+/* LIGHT MODE OVERRIDES */
 body.light-mode {
   --bg-core: #ffffff;
-  --bg-gradient: radial-gradient(circle at center, #fff0f5 0%, #ffffff 80%);
-  --hud-bg: rgba(255, 255, 255, 0.75);
-  --hud-border: rgba(255, 100, 150, 0.3);
-  --accent-primary: #ff3377;
-  --accent-secondary: #aa00ff;
-  --text-main: #333333;
+  --bg-gradient: radial-gradient(circle at 50% 30%, #fff5f8 0%, #f0f4f8 90%);
+  --hud-bg: rgba(255, 255, 255, 0.85);
+  --hud-border: rgba(0, 0, 0, 0.08);
+  --text-main: #1a1a1a;
+  --text-secondary: #333333;
   --text-dim: #666666;
-  --user-msg-bg: rgba(255, 51, 119, 0.15);
-  --user-msg-border: rgba(255, 51, 119, 0.3);
-  --ai-msg-bg: rgba(255, 250, 252, 0.9);
+  --user-msg-bg: linear-gradient(135deg, rgba(255, 51, 119, 0.15), rgba(189, 0, 255, 0.05));
+  --user-msg-border: rgba(255, 51, 119, 0.2);
+  --ai-msg-bg: #f2f2f2;
+  --ai-msg-border: rgba(0, 0, 0, 0.05);
 }
 
-/* --- BASE STYLES --- */
+/* =========================================
+   2. RESET & BASE STYLES
+   ========================================= */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
 body, html {
   margin: 0; padding: 0; width: 100%; height: 100%;
   background-color: var(--bg-core);
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: var(--text-main);
-  overflow: hidden;
-  transition: background 0.5s ease;
+  overflow: hidden; 
+  font-size: 16px;
 }
 
+/* DESKTOP SCROLLBAR (Sangat Penting untuk PC) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: rgba(255, 255, 255, 0.15); 
+  border-radius: 10px; 
+  border: 2px solid transparent; 
+  background-clip: content-box; 
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+/* Light Mode Scrollbar */
+body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+body.light-mode ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+/* =========================================
+   3. LAYOUT STRUCTURE
+   ========================================= */
 .app-container {
-  position: relative; width: 100vw; height: 100vh;
+  position: relative; width: 100%; height: 100vh;
   background: var(--bg-gradient);
-}
-.canvas-layer { position: absolute; inset: 0; z-index: 0; }
-.ui-layer { 
-  position: absolute; inset: 0; z-index: 10; 
-  display: flex; flex-direction: column; justify-content: space-between;
-  pointer-events: none;
+  display: flex; flex-direction: column;
 }
 
-/* --- HUD ELEMENTS --- */
+.canvas-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+
+.ui-layer { 
+  position: relative; z-index: 10; 
+  display: flex; flex-direction: column; 
+  height: 100%; width: 100%;
+  /* Max width penting agar di monitor ultrawide tidak pusing melihatnya */
+  max-width: 1000px; 
+  margin: 0 auto; /* Tengah secara horizontal */
+  background: transparent;
+}
+
+/* =========================================
+   4. HEADER (HUD)
+   ========================================= */
 .hud-header {
-  pointer-events: auto; padding: 15px 20px;
+  flex-shrink: 0;
+  padding: 20px 30px;
   display: flex; justify-content: space-between; align-items: center;
 }
+
 .status-display {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--hud-bg); padding: 8px 16px; border-radius: 20px;
-  border: 1px solid var(--hud-border); backdrop-filter: blur(10px);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--hud-bg); padding: 8px 20px; border-radius: 30px;
+  border: 1px solid var(--hud-border); 
+  backdrop-filter: blur(var(--hud-blur));
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
 }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
-.status-dot.ready { background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
-.status-dot.busy { background: var(--accent-secondary); animation: blink 0.5s infinite; }
-.status-text { font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+/* Efek Hover di Desktop */
+.status-display:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.status-dot.ready { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+.status-dot.busy { background: var(--accent-secondary); animation: blink 1s infinite; }
+.status-text { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); }
+
 .theme-toggle-btn {
   background: var(--hud-bg); border: 1px solid var(--hud-border);
-  color: var(--text-main); padding: 8px; border-radius: 50%; width: 35px; height: 35px;
-  cursor: pointer; backdrop-filter: blur(10px);
+  color: var(--text-main); border-radius: 50%; width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; backdrop-filter: blur(var(--hud-blur));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.theme-toggle-btn:hover { background: rgba(255,255,255,0.1); transform: rotate(15deg) scale(1.1); }
+
+/* =========================================
+   5. CHAT FEED
+   ========================================= */
+.chat-feed {
+  flex: 1; overflow-y: auto; padding: 10px 30px;
+  display: flex; flex-direction: column; gap: 20px;
+  scroll-behavior: smooth;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 30px, black 95%, transparent 100%);
 }
 
-/* --- CHAT FEED --- */
-.chat-feed {
-  flex: 1; overflow-y: auto; padding: 10px 20px;
-  display: flex; flex-direction: column; gap: 15px;
-  mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
-  pointer-events: auto;
-  -webkit-overflow-scrolling: touch; /* Smooth scroll di iOS */
-}
-.msg-row { display: flex; width: 100%; animation: slideIn 0.3s ease-out; }
+.msg-row { display: flex; width: 100%; animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .msg-row.user { justify-content: flex-end; }
 .msg-row.ai { justify-content: flex-start; }
 
 .msg-content {
-  max-width: 85%; padding: 12px 16px; font-size: 14px; line-height: 1.5;
-  border-radius: 18px; white-space: pre-wrap; word-wrap: break-word;
+  /* Di Desktop jangan terlalu lebar, max 75% biar enak dibaca mata */
+  max-width: 75%; 
+  padding: 16px 22px; 
+  font-size: 15px; line-height: 1.6;
+  border-radius: 22px; position: relative;
+  word-wrap: break-word;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
 }
+
+/* Efek subtle saat mouse hover pesan */
+.msg-content:hover { transform: scale(1.005); }
+
 .msg-row.user .msg-content {
   background: var(--user-msg-bg); border: 1px solid var(--user-msg-border);
-  color: var(--accent-primary); border-bottom-right-radius: 4px;
+  color: var(--text-main); border-bottom-right-radius: 4px;
 }
 .msg-row.ai .msg-content {
-  background: var(--ai-msg-bg); border: 1px solid var(--hud-border);
+  background: var(--ai-msg-bg); border: 1px solid var(--ai-msg-border);
   color: var(--text-main); border-bottom-left-radius: 4px;
 }
 
-/* --- IMAGE STYLES (RESPONSIVE FIX) --- */
+/* =========================================
+   6. IMAGE & MEDIA
+   ========================================= */
 .generated-image-container {
-  margin-top: 12px;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--hud-border);
-  background: #000;
-  width: 100%;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-  animation: fadeIn 0.5s ease-in;
+  margin-top: 15px; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--hud-border); background: #000;
+  width: 100%; max-width: 450px; /* Limit lebar gambar di desktop */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
 }
-.generated-image {
-  width: 100%; height: auto; display: block; object-fit: cover;
-  min-height: 100px;
-}
+.generated-image-container:hover { transform: translateY(-3px); box-shadow: 0 15px 50px rgba(0,0,0,0.4); }
+.generated-image { width: 100%; height: auto; display: block; object-fit: cover; }
+
 .img-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.8);
-  border-top: 1px solid var(--hud-border);
-}
-.img-caption {
-  font-size: 10px;
-  color: var(--text-dim);
-  font-style: italic;
-  max-width: 70%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding: 12px 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+  display: flex; justify-content: space-between; align-items: center;
 }
 .save-btn {
-  background: var(--accent-primary);
-  color: white;
-  border: none;
-  padding: 5px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: transform 0.2s;
+  background: var(--accent-primary); color: #fff; border: none;
+  padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
 }
-.save-btn:hover { transform: scale(1.1); }
-.user-upload-container {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-}
-.user-upload-preview {
-  max-width: 100%; max-height: 250px; border-radius: 10px;
-  margin-bottom: 8px; border: 1px solid var(--accent-primary);
-  object-fit: contain;
-}
-.save-btn-mini {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--hud-border);
-  color: white;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(5px);
-}
-.save-btn-mini:hover { background: var(--accent-primary); }
+.save-btn:hover { background: #ff3377; transform: scale(1.05); box-shadow: 0 0 15px var(--accent-primary); }
 
-/* Memastikan loading pulse terlihat di mode terang */
-.loading-pulse {
-  color: var(--accent-primary);
-  font-weight: bold;
-}
-
-/* --- FOOTER --- */
+/* =========================================
+   7. FOOTER & INPUT DOCK
+   ========================================= */
 .hud-footer {
-  pointer-events: auto; padding: 15px;
-  display: flex; flex-direction: column; gap: 10px; align-items: center;
+  flex-shrink: 0;
+  padding: 20px 30px;
+  display: flex; flex-direction: column; gap: 15px; align-items: center;
+  z-index: 30;
 }
+
 .action-bar { display: flex; gap: 10px; }
 .ctrl-btn {
   background: var(--hud-bg); border: 1px solid var(--hud-border);
-  color: var(--text-main); padding: 6px 16px; font-size: 11px; font-weight: 700;
-  border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
+  color: var(--text-main); padding: 8px 18px; font-size: 13px; font-weight: 600;
+  border-radius: 24px; cursor: pointer; backdrop-filter: blur(var(--hud-blur));
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.ctrl-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-
-/* Style tambahan untuk tombol kontrol yang lebih jelas */
-.stop-btn {
-  background: #990000; /* Merah untuk STOP */
-  color: white;
-  border: 1px solid #ff5555;
-}
-.continue-btn {
-  background: #005500; /* Hijau tua untuk LANJUT */
-  color: #ccffcc;
-  border: 1px solid #00aa00;
+.ctrl-btn:hover { 
+  background: rgba(255,255,255,0.1); 
+  transform: translateY(-2px); 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+  border-color: rgba(255,255,255,0.3);
 }
 
+.stop-btn:hover { background: rgba(255, 50, 50, 0.4); border-color: #ff5555; }
+.continue-btn:hover { background: rgba(50, 255, 100, 0.4); border-color: #55ff88; }
 
 .input-dock {
-  width: 100%; max-width: 600px; height: 50px;
+  width: 100%; max-width: 700px; height: 60px;
   background: var(--hud-bg); border: 1px solid var(--hud-border);
-  border-radius: 25px; display: flex; align-items: center; padding: 4px;
-  backdrop-filter: blur(10px); position: relative;
+  border-radius: 30px; display: flex; align-items: center; padding: 5px 10px;
+  backdrop-filter: blur(var(--hud-blur));
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
 }
+.input-dock:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.15);
+  transform: scale(1.01);
+}
+
 .icon-btn {
-  background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 0 10px;
-  color: var(--accent-primary);
+  background: transparent; border: none; font-size: 22px; cursor: pointer; 
+  padding: 0 15px; color: var(--text-dim); transition: all 0.2s;
 }
+.icon-btn:hover { color: var(--accent-primary); transform: scale(1.1); }
+
 .input-dock input[type="text"] {
   flex: 1; background: transparent; border: none;
-  color: var(--text-main); font-size: 14px; padding: 0 10px; outline: none;
+  color: var(--text-main); font-size: 16px; padding: 0 10px; outline: none;
 }
+
 .send-btn {
   background: var(--accent-primary); color: white; border: none;
-  width: 40px; height: 40px; border-radius: 50%; font-size: 14px;
+  width: 48px; height: 48px; border-radius: 50%; font-size: 18px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.send-btn:hover:not(:disabled) { background: var(--accent-secondary); }
+.send-btn:hover:not(:disabled) { 
+  background: var(--accent-secondary); 
+  transform: rotate(-10deg) scale(1.1); 
+  box-shadow: 0 0 20px var(--accent-secondary);
+}
+.send-btn:active { transform: scale(0.9); }
 
+/* Mini Preview (Upload) */
 .mini-preview {
-  position: absolute; bottom: 60px; left: 10px;
-  width: 60px; height: 60px; border-radius: 8px; overflow: hidden;
+  position: absolute; bottom: 80px; left: 20px;
+  width: 80px; height: 80px; border-radius: 12px;
   border: 2px solid var(--accent-primary); background: #000;
-  cursor: pointer;
-  z-index: 20;
+  z-index: 50; animation: popIn 0.3s ease;
+  cursor: default;
 }
-.mini-preview img { width: 100%; height: 100%; object-fit: cover; }
+.mini-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
 .remove-x {
-  position: absolute; top: -5px; right: -5px; background: red; color: white;
-  font-size: 10px; padding: 2px 5px; font-weight: bold; border-radius: 50%;
-  line-height: 1; height: 16px; width: 16px; display: flex; align-items: center; justify-content: center;
+  position: absolute; top: -10px; right: -10px;
+  background: #ff0040; color: white; width: 24px; height: 24px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
 }
+.remove-x:hover { transform: scale(1.2); }
 
+/* =========================================
+   8. ANIMATIONS & RESPONSIVE
+   ========================================= */
+@keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes blink { 50% { opacity: 0.5; } }
+@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
-/* --- MOBILE OPTIMIZATIONS (iPhone/Android) --- */
+/* --- MOBILE & TABLET OPTIMIZATIONS --- */
 @media screen and (max-width: 768px) {
-  .hud-header { padding: 10px 15px; }
-  .status-text { display: none; } /* Sembunyikan teks status di layar kecil */
+  .ui-layer { max-width: 100%; } /* Full width di HP */
+  .hud-header { padding: 15px 15px; }
+  .status-text { display: none; }
   .chat-feed { padding: 10px 15px; }
-  .msg-content { max-width: 90%; font-size: 13px; }
-  .input-dock { height: 45px; }
-  .input-dock input[type="text"] { font-size: 13px; }
-  .ctrl-btn { padding: 6px 12px; font-size: 10px; }
+  .msg-content { max-width: 88%; font-size: 14px; padding: 12px 16px; }
+  .input-dock { height: 50px; max-width: 100%; }
+  .send-btn { width: 40px; height: 40px; font-size: 16px; }
+  .icon-btn { font-size: 18px; padding: 0 10px; }
+  
+  /* Hilangkan efek hover berat di HP agar tidak lag */
+  .msg-content:hover, .generated-image-container:hover, .status-display:hover {
+    transform: none;
+    box-shadow: none; /* Kembalikan ke shadow default jika perlu */
+  }
 }
-
-@keyframes blink { 50% { opacity: 0.5; transform: scale(1.2); } }
-@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

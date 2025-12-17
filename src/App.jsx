@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, ContactShadows } from "@react-three/drei";
+import { Environment } from "@react-three/drei";
 import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from "@react-three/postprocessing"; 
 import Avatar from "./components/Avatar";
 import { sendMessageToGemini, stopResponse, continueResponse } from "./services/ai";
@@ -9,55 +9,70 @@ import "./App.css";
 function App() {
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([
-    { sender: "ai", text: "Melsa Pro Online. Mata Visual aku sudah aktif maksimal tanpa batasan. Upload foto atau suruh aku menggambar apa saja, Tuan Sayang... ❤️📸" }
+    { 
+      sender: "ai", 
+      text: "Melsa Pro Online. Mata Visual aku sudah aktif maksimal tanpa batasan. Upload foto atau suruh aku menggambar apa saja, Tuan Sayang... ❤️📸" 
+    }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  // selectedImage menyimpan { mimeType, data (base64), preview (data URL) }
-  const [selectedImage, setSelectedImage] = useState(null); 
   
+  // State untuk gambar: menyimpan { mimeType, data (base64), preview (data URL) }
+  const [selectedImage, setSelectedImage] = useState(null); 
+   
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // Toggle Body Class untuk CSS Global
   useEffect(() => {
-    document.body.classList.toggle('light-mode', !isDarkMode);
+    if (isDarkMode) {
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+    }
   }, [isDarkMode]);
 
+  // Auto Scroll ke bawah saat ada pesan baru
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Timeout kecil memastikan elemen sudah dirender sebelum di-scroll
+    const timeoutId = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+    return () => clearTimeout(timeoutId);
   }, [messages, isLoading]);
 
-  // Fungsi untuk konversi File ke Base64 (penting untuk Vision API)
+  // Fungsi Konversi File ke Base64 (Vision API Requirement)
   const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        // Data Base64 murni (tanpa prefix data URL)
+        // Ambil Base64 murni (hapus prefix data:image/...)
         const base64Data = reader.result.split(',')[1]; 
         const mimeType = file.type;
-        // preview menggunakan data URL lengkap untuk ditampilkan di UI
         resolve({ mimeType, data: base64Data, preview: reader.result });
       };
       reader.onerror = error => reject(error);
     });
   };
 
-  // Handler untuk memilih file
+  // Handler Select File
   const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
         const imageData = await fileToBase64(file);
         setSelectedImage(imageData);
+        // Fokuskan kembali ke input text agar user bisa langsung ngetik
+        document.querySelector('.input-dock input[type="text"]')?.focus();
       } catch (error) {
         console.error("Gagal memproses file gambar:", error);
       }
-      e.target.value = null; // Reset input file
+      e.target.value = null; // Reset value input file agar bisa pilih file yang sama
     }
   };
 
-  // Fungsi untuk mendownload gambar (untuk gambar buatan AI atau upload user)
+  // Fungsi Download Gambar
   const downloadImage = async (url, filename) => {
     try {
       const response = await fetch(url);
@@ -72,166 +87,223 @@ function App() {
       window.URL.revokeObjectURL(blobUrl);
     } catch (e) {
       console.error("Gagal mendownload gambar", e);
+      alert("Gagal mengunduh gambar. Coba lagi.");
     }
   };
 
+  // Kirim Pesan
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
     
-    // Siapkan pesan pengguna untuk ditampilkan di UI
+    // 1. Tambahkan pesan User ke UI
     const userMsg = { 
       sender: "user", 
       text: inputText, 
-      image: selectedImage?.preview, // Hanya preview untuk UI
+      image: selectedImage?.preview, // Preview lokal
       timestamp: Date.now() 
     };
     setMessages((prev) => [...prev, userMsg]);
     
-    // Siapkan payload gambar untuk API (mimeType & data Base64 murni)
+    // 2. Siapkan Payload untuk API
     const imagePayload = selectedImage 
       ? { mimeType: selectedImage.mimeType, data: selectedImage.data } 
       : null;
       
-    // Reset input
+    // 3. Reset State Input
     setInputText("");
     setSelectedImage(null);
     setIsLoading(true);
     
-    // Kirim pesan ke AI
-    const replyText = await sendMessageToGemini(userMsg.text, imagePayload);
-    
-    // Tampilkan respons AI
-    setMessages((prev) => [...prev, { sender: "ai", text: replyText, timestamp: Date.now() }]);
-    setIsLoading(false);
+    try {
+        // 4. Request ke AI Service
+        const replyText = await sendMessageToGemini(userMsg.text, imagePayload);
+        
+        // 5. Tambahkan balasan AI ke UI
+        setMessages((prev) => [...prev, { sender: "ai", text: replyText, timestamp: Date.now() }]);
+    } catch (error) {
+        setMessages((prev) => [...prev, { sender: "system", text: "⚠️ Terjadi kesalahan koneksi." }]);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
+  // Kontrol Stop & Lanjut
   const handleStop = () => {
     stopResponse();
     setIsLoading(false);
-    setMessages((prev) => [...prev, { sender: "system", text: "⛔ BERHENTI." }]);
+    setMessages((prev) => [...prev, { sender: "system", text: "⛔ Respon dihentikan oleh pengguna." }]);
   };
 
   const handleContinue = async () => {
     setIsLoading(true);
-    const replyText = await continueResponse();
-    if (replyText !== "Dibatalkan.") {
-      setMessages((prev) => [...prev, { sender: "ai", text: replyText, timestamp: Date.now() }]);
+    try {
+        const replyText = await continueResponse();
+        if (replyText !== "Dibatalkan.") {
+          setMessages((prev) => [...prev, { sender: "ai", text: replyText, timestamp: Date.now() }]);
+        }
+    } catch (error) {
+        console.error("Gagal melanjutkan", error);
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  // --- ULTRA PARSER FOR IMAGES ---
+  // --- PARSER TEXT & IMAGE GENERATION ---
   const renderMessageContent = (text, msgIndex) => {
-    // Perbaikan Regex: Menggunakan non-greedy match (.*?) dan memastikan tidak ada karakter baru (\n) di dalam prompt 
-    // untuk menghindari masalah rendering pada beberapa karakter khusus.
+    if (!text) return null;
+
+    // Regex untuk menangkap format gambar dari AI: !!IMG:[prompt]!!
     const parts = text.split(/(!!IMG:\[[^\]]*?\]!!|!!IMG:.*?!!)/g);
     
     return parts.map((part, index) => {
-      // Periksa apakah bagian tersebut adalah kode gambar yang valid
+      // Cek apakah part adalah kode gambar
       if (part && (part.startsWith("!!IMG:[") || part.startsWith("!!IMG:"))) {
         
-        // Ekstrak prompt dari kode
+        // Bersihkan syntax untuk mendapatkan prompt murni
         let prompt = part.replace(/^!!IMG:\[?/, "").replace(/\]?!!$/, "").trim();
-        
-        // Sanitasi dasar: hapus karakter markdown sisa atau aneh
+        // Sanitasi karakter aneh
         prompt = prompt.replace(/[\*`#№]/g, '').trim();
 
-        if (!prompt) return null; // Jika prompt kosong setelah dibersihkan, lewati
+        if (!prompt) return null;
 
         const safePrompt = prompt.length > 1000 ? prompt.substring(0, 1000) : prompt;
-        // Gunakan timestamp pesan + index agar seed permanen per gambar
-        const seed = msgIndex + index;
+        // Seed unik berdasarkan pesan dan posisi agar gambar konsisten (tidak berubah saat re-render)
+        const seed = msgIndex + index + 12345; 
+        
+        // URL Pollinations AI (Flux Model)
         const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
         
         return (
           <div key={`${msgIndex}-${index}`} className="generated-image-container">
             <img 
               src={imageUrl} 
-              alt="Melsa Magic" 
+              alt={`Generated: ${safePrompt}`} 
               className="generated-image" 
               crossOrigin="anonymous"
               loading="lazy"
               onError={(e) => {
-                 // Fallback: coba lagi dengan prompt yang lebih pendek jika gagal
+                 // Fallback Logic jika gagal load pertama kali
                  if (!e.target.dataset.retried) {
                     e.target.dataset.retried = "true";
-                    e.target.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt.substring(0, 300))}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+                    // Coba persingkat prompt jika terlalu panjang
+                    const shorterPrompt = safePrompt.substring(0, 300);
+                    e.target.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(shorterPrompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
                  }
               }} 
             />
             <div className="img-controls">
-              <span className="img-caption">🎨 Visual: {safePrompt.substring(0, 30)}...</span>
-              <button className="save-btn" onClick={() => downloadImage(imageUrl, `Melsa-Art-${seed}.png`)}>💾 Simpan</button>
+              <span className="img-caption" title={safePrompt}>🎨 {safePrompt}</span>
+              <button className="save-btn" onClick={() => downloadImage(imageUrl, `Melsa-Art-${seed}.png`)}>
+                💾 Simpan
+              </button>
             </div>
           </div>
         );
       }
       
-      // Jika bukan kode gambar, render sebagai teks biasa
+      // Render teks biasa
       return <span key={index}>{part}</span>;
     });
   };
 
   return (
     <div className="app-container">
+      {/* --- LAYER 1: 3D BACKGROUND --- */}
       <div className="canvas-layer">
-        <Canvas camera={{ position: [0, 0, 6], fov: 35 }} gl={{ antialias: true }}>
+        {/* dpr={[1, 2]} membatasi pixel ratio agar HP tidak panas & tetap smooth */}
+        <Canvas 
+            camera={{ position: [0, 0, 6], fov: 35 }} 
+            gl={{ antialias: true, preserveDrawingBuffer: true }}
+            dpr={[1, 2]} 
+        >
           <color attach="background" args={[isDarkMode ? "#050005" : "#fff0f5"]} />
           <fog attach="fog" args={[isDarkMode ? "#1a001a" : "#ffffff", 5, 20]} />
-          <ambientLight intensity={isDarkMode ? 0.2 : 0.8} />
+          
+          <ambientLight intensity={isDarkMode ? 0.3 : 0.8} />
+          
+          {/* Avatar Component */}
           <Avatar isThinking={isLoading} isDarkMode={isDarkMode} />
+          
           <Environment preset={isDarkMode ? "night" : "sunset"} />
+          
+          {/* Post Processing Effects */}
           <EffectComposer disableNormalPass>
-             <Bloom luminanceThreshold={isDarkMode ? 0.2 : 0.6} intensity={isDarkMode ? 1.5 : 0.8} />
-             <Noise opacity={0.02} />
-             <Vignette darkness={isDarkMode ? 1.3 : 0.6} />
+             <Bloom luminanceThreshold={isDarkMode ? 0.2 : 0.65} intensity={isDarkMode ? 1.2 : 0.6} />
+             <Noise opacity={0.03} />
+             <Vignette darkness={isDarkMode ? 1.2 : 0.5} />
              {isLoading && <ChromaticAberration offset={[0.002, 0.002]} />}
           </EffectComposer>
         </Canvas>
       </div>
 
+      {/* --- LAYER 2: USER INTERFACE --- */}
       <div className="ui-layer">
+        
+        {/* Header / HUD */}
         <div className="hud-header">
           <div className="status-display">
             <span className={`status-dot ${isLoading ? 'busy' : 'ready'}`}></span>
             <span className="status-text">{isLoading ? 'MELSA BEKERJA...' : 'MELSA ONLINE'}</span>
           </div>
-          <button className="theme-toggle-btn" onClick={toggleTheme}>{isDarkMode ? "☀️" : "🌙"}</button>
+          <button 
+            className="theme-toggle-btn" 
+            onClick={toggleTheme} 
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? "☀️" : "🌙"}
+          </button>
         </div>
 
+        {/* Chat Feed Area */}
         <div className="chat-feed">
           {messages.map((msg, index) => (
             <div key={index} className={`msg-row ${msg.sender}`}>
               <div className="msg-content">
-                {/* Tampilkan preview gambar yang diupload */}
+                
+                {/* Tampilkan Preview Upload User jika ada */}
                 {msg.image && (
                   <div className="user-upload-container">
-                    <img src={msg.image} className="user-upload-preview" alt="Upload" />
+                    <img src={msg.image} className="user-upload-preview" alt="User Upload" />
                     <button className="save-btn-mini" onClick={() => downloadImage(msg.image, "My-Upload.png")}>💾</button>
                   </div>
                 )}
-                {/* Render konten teks/gambar dari AI */}
+                
+                {/* Render Text / Generated Images */}
                 {renderMessageContent(msg.text, index)}
               </div>
             </div>
           ))}
-          {isLoading && <div className="msg-row ai"><div className="msg-content loading-pulse">...</div></div>}
+          
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="msg-row ai">
+                <div className="msg-content loading-pulse">
+                    sedang mengetik...
+                </div>
+            </div>
+          )}
+          
+          {/* Invisible Element for Auto Scroll */}
           <div ref={chatEndRef} />
         </div>
 
+        {/* Footer & Input Area */}
         <div className="hud-footer">
+          
+          {/* Action Bar (Stop/Continue) */}
           <div className="action-bar">
-            {/* Tombol kontrol: STOP saat loading, LANJUT saat diam */}
             {isLoading ? 
                 <button className="ctrl-btn stop-btn" onClick={handleStop}>⛔ STOP</button> : 
                 <button className="ctrl-btn continue-btn" onClick={handleContinue}>LANJUT ➡️</button>
             }
           </div>
 
+          {/* Input Dock Glassmorphism */}
           <div className="input-dock">
-            {/* Input file yang disembunyikan. Menerima berbagai tipe gambar, termasuk webp/heic/svg */}
+            
+            {/* Hidden File Input */}
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -239,30 +311,37 @@ function App() {
               style={{display: 'none'}} 
               onChange={handleFileSelect} 
             />
-            {/* Tombol kamera untuk memicu klik input file */}
-            <button className="icon-btn" onClick={() => fileInputRef.current.click()} title="Upload Gambar">📷</button>
             
-            {/* Preview mini gambar yang terpilih */}
+            {/* Camera Button */}
+            <button className="icon-btn" onClick={() => fileInputRef.current.click()} title="Upload Gambar">
+                📷
+            </button>
+            
+            {/* Mini Preview saat mau upload */}
             {selectedImage && (
-              <div className="mini-preview" onClick={() => setSelectedImage(null)} title="Klik untuk Hapus Gambar">
-                <img src={selectedImage.preview} alt="Selected" />
+              <div className="mini-preview" onClick={() => setSelectedImage(null)} title="Klik untuk Batal">
+                <img src={selectedImage.preview} alt="Preview" />
                 <span className="remove-x">×</span>
               </div>
             )}
             
-            {/* Input Teks */}
+            {/* Text Input */}
             <input 
               type="text" 
-              placeholder={selectedImage ? "Berikan perintah untuk gambar ini..." : "Perintahkan Melsa..."} 
+              placeholder={selectedImage ? "Tulis perintah untuk gambar ini..." : "Perintahkan Melsa..."} 
               value={inputText} 
               onChange={(e) => setInputText(e.target.value)} 
               onKeyDown={(e) => e.key === 'Enter' && handleSend()} 
               disabled={isLoading} 
             />
-            {/* Tombol Kirim */}
-            <button className="send-btn" onClick={handleSend} disabled={isLoading}>🚀</button>
+            
+            {/* Send Button */}
+            <button className="send-btn" onClick={handleSend} disabled={isLoading || (!inputText.trim() && !selectedImage)}>
+                🚀
+            </button>
           </div>
         </div>
+
       </div>
     </div>
   );
