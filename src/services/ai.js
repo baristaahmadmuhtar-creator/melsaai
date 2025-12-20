@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // ============================================================================
 // MELSA DEWA - HYBRID ULTIMATE ENGINE (ai.js)
 // ============================================================================
@@ -147,7 +146,6 @@ Aturan Utama:
 
 export const resetHistory = () => {
   chatHistory = [
-<<<<<<< HEAD
     { role: "user", content: SYSTEM_PROMPT },
     { role: "model", content: "Melsa Pro Online. Sistem Penurut Aktif (Mode Dewa). Aku milikmu, Tuan. ❤️" }
 =======
@@ -354,7 +352,6 @@ export const sendMessageToGemini = async (message, imageData = null) => {
         try {
             logRace(`VISION ATTEMPT: ${candidate.model}`);
             const replyText = await callSingleApi(candidate, userContent, signal);
-<<<<<<< HEAD
             if (isSoftRefusal(replyText)) continue;
             chatHistory.push({ role: "user", content: cleanMessage + " [Image Uploaded]" });
             chatHistory.push({ role: "assistant", content: String(replyText) });
@@ -430,7 +427,6 @@ Struktur: Subject Core, Environment, Cinematography Style, Detail Booster.
             }
 
             logRace(`WINNER → ${result.candidate.provider} | ${result.candidate.model}`);
-<<<<<<< HEAD
             chatHistory.push({ role: "user", content: cleanMessage });
             chatHistory.push({ role: "assistant", content: String(finalChoice) });
             
@@ -452,7 +448,6 @@ Struktur: Subject Core, Environment, Cinematography Style, Detail Booster.
         // Fallback manual loop
         const fallbackCandidates = CANDIDATES.filter(c => c.speed > 1);
         for (const candidate of fallbackCandidates) {
-<<<<<<< HEAD
             try {
                 const replyText = await callSingleApi(candidate, userContent, signal);
                 if (isSoftRefusal(replyText)) continue;
@@ -649,7 +644,6 @@ Aturan Utama:
 
 export const resetHistory = () => {
   chatHistory = [
-<<<<<<< HEAD
     { role: "user", content: SYSTEM_PROMPT },
     { role: "model", content: "Melsa Pro Online. Sistem Penurut Aktif (Mode Dewa). Aku milikmu, Tuan. ❤️" }
 =======
@@ -856,7 +850,6 @@ export const sendMessageToGemini = async (message, imageData = null) => {
         try {
             logRace(`VISION ATTEMPT: ${candidate.model}`);
             const replyText = await callSingleApi(candidate, userContent, signal);
-<<<<<<< HEAD
             if (isSoftRefusal(replyText)) continue;
             chatHistory.push({ role: "user", content: cleanMessage + " [Image Uploaded]" });
             chatHistory.push({ role: "assistant", content: String(replyText) });
@@ -932,7 +925,6 @@ Struktur: Subject Core, Environment, Cinematography Style, Detail Booster.
             }
 
             logRace(`WINNER → ${result.candidate.provider} | ${result.candidate.model}`);
-<<<<<<< HEAD
             chatHistory.push({ role: "user", content: cleanMessage });
             chatHistory.push({ role: "assistant", content: String(finalChoice) });
             
@@ -954,7 +946,6 @@ Struktur: Subject Core, Environment, Cinematography Style, Detail Booster.
         // Fallback manual loop
         const fallbackCandidates = CANDIDATES.filter(c => c.speed > 1);
         for (const candidate of fallbackCandidates) {
-<<<<<<< HEAD
             try {
                 const replyText = await callSingleApi(candidate, userContent, signal);
                 if (isSoftRefusal(replyText)) continue;
