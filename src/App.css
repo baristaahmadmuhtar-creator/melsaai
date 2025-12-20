@@ -1,301 +1,212 @@
 /* =========================================
-   1. VARIABLES & THEME CONFIGURATION
+   MELSA OS THEME V2 - CYBERPUNK
    ========================================= */
+@import url('[https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono:wght@400;700&display=swap)');
+
 :root {
-  /* DARK MODE (DEFAULT) */
   --bg-core: #050505;
-  --bg-gradient: radial-gradient(circle at 50% 30%, #1a0510 0%, #000000 90%);
-  
-  /* Glassmorphism Colors */
-  --hud-bg: rgba(18, 18, 18, 0.75);
-  --hud-border: rgba(255, 255, 255, 0.08);
-  --hud-blur: 25px; /* Blur lebih kuat untuk Desktop */
-  
-  /* Brand Colors */
-  --accent-primary: #ff0055; 
-  --accent-glow: rgba(255, 0, 85, 0.5);
-  --accent-secondary: #bd00ff;
-  
-  /* Text Colors */
-  --text-main: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-dim: #888888;
-  
-  /* Chat Bubbles */
-  --user-msg-bg: linear-gradient(135deg, rgba(255, 0, 85, 0.25), rgba(189, 0, 255, 0.15));
-  --user-msg-border: rgba(255, 0, 85, 0.3);
-  --ai-msg-bg: rgba(255, 255, 255, 0.05);
-  --ai-msg-border: rgba(255, 255, 255, 0.06);
-
-  /* Spacing & Safe Areas */
-  --safe-top: env(safe-area-inset-top, 20px);
-  --safe-bottom: env(safe-area-inset-bottom, 20px);
+  --neon-green: #ccff00;
+  --neon-dim: rgba(204, 255, 0, 0.1);
+  --neon-danger: #ff003c;
+  --glass-bg: rgba(20, 20, 20, 0.8);
+  --border-light: rgba(255, 255, 255, 0.1);
 }
 
-/* LIGHT MODE OVERRIDES */
-body.light-mode {
-  --bg-core: #ffffff;
-  --bg-gradient: radial-gradient(circle at 50% 30%, #fff5f8 0%, #f0f4f8 90%);
-  --hud-bg: rgba(255, 255, 255, 0.85);
-  --hud-border: rgba(0, 0, 0, 0.08);
-  --text-main: #1a1a1a;
-  --text-secondary: #333333;
-  --text-dim: #666666;
-  --user-msg-bg: linear-gradient(135deg, rgba(255, 51, 119, 0.15), rgba(189, 0, 255, 0.05));
-  --user-msg-border: rgba(255, 51, 119, 0.2);
-  --ai-msg-bg: #f2f2f2;
-  --ai-msg-border: rgba(0, 0, 0, 0.05);
-}
-
-/* =========================================
-   2. RESET & BASE STYLES
-   ========================================= */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body, html {
   margin: 0; padding: 0; width: 100%; height: 100%;
   background-color: var(--bg-core);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: var(--text-main);
-  overflow: hidden; 
-  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  color: #eee;
+  overflow: hidden;
 }
 
-/* DESKTOP SCROLLBAR (Sangat Penting untuk PC) */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { 
-  background: rgba(255, 255, 255, 0.15); 
-  border-radius: 10px; 
-  border: 2px solid transparent; 
-  background-clip: content-box; 
-}
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
-
-/* Light Mode Scrollbar */
-body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
-body.light-mode ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
-
-/* =========================================
-   3. LAYOUT STRUCTURE
-   ========================================= */
+/* --- LAYOUT & CANVAS --- */
 .app-container {
-  position: relative; width: 100%; height: 100vh;
-  background: var(--bg-gradient);
+  position: relative; width: 100vw; height: 100vh;
   display: flex; flex-direction: column;
 }
 
-.canvas-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.canvas-layer { position: absolute; inset: 0; z-index: 0; }
+.noise-overlay {
+  position: fixed; inset: 0; z-index: 1; opacity: 0.05; 
+  pointer-events: none; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='[http://www.w3.org/2000/svg'%3E%3Cfilter](http://www.w3.org/2000/svg'%3E%3Cfilter) id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
 
 .ui-layer { 
-  position: relative; z-index: 10; 
-  display: flex; flex-direction: column; 
-  height: 100%; width: 100%;
-  /* Max width penting agar di monitor ultrawide tidak pusing melihatnya */
-  max-width: 1000px; 
-  margin: 0 auto; /* Tengah secara horizontal */
-  background: transparent;
+  position: relative; z-index: 10; display: flex; flex-direction: column; 
+  height: 100%; width: 100%; 
 }
 
-/* =========================================
-   4. HEADER (HUD)
-   ========================================= */
+/* --- HEADER --- */
 .hud-header {
-  flex-shrink: 0;
-  padding: 20px 30px;
-  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+  border-bottom: 1px solid var(--border-light);
 }
 
-.status-display {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--hud-bg); padding: 8px 20px; border-radius: 30px;
-  border: 1px solid var(--hud-border); 
-  backdrop-filter: blur(var(--hud-blur));
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease;
+.brand-title { font-weight: 900; font-size: 20px; letter-spacing: -1px; }
+.brand-title .accent { color: var(--neon-green); }
+.brand-title .version { font-size: 10px; opacity: 0.5; margin-left: 5px; font-family: 'JetBrains Mono'; }
+
+.status-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  padding: 4px 10px; border: 1px solid #333;
+  color: #666; background: #111;
+  text-transform: uppercase; display: flex; align-items: center; gap: 6px;
+  border-radius: 4px; transition: 0.3s;
 }
-/* Efek Hover di Desktop */
-.status-display:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
-
-.status-dot { width: 8px; height: 8px; border-radius: 50%; }
-.status-dot.ready { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
-.status-dot.busy { background: var(--accent-secondary); animation: blink 1s infinite; }
-.status-text { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); }
-
-.theme-toggle-btn {
-  background: var(--hud-bg); border: 1px solid var(--hud-border);
-  color: var(--text-main); border-radius: 50%; width: 42px; height: 42px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; backdrop-filter: blur(var(--hud-blur));
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.status-badge.active {
+  border-color: var(--neon-green); color: var(--neon-green); background: var(--neon-dim);
+  box-shadow: 0 0 10px var(--neon-dim);
 }
-.theme-toggle-btn:hover { background: rgba(255,255,255,0.1); transform: rotate(15deg) scale(1.1); }
 
-/* =========================================
-   5. CHAT FEED
-   ========================================= */
+/* --- CHAT FEED --- */
 .chat-feed {
-  flex: 1; overflow-y: auto; padding: 10px 30px;
+  flex: 1; overflow-y: auto; padding: 20px; 
   display: flex; flex-direction: column; gap: 20px;
-  scroll-behavior: smooth;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 30px, black 95%, transparent 100%);
+  width: 100%; max-width: 900px; margin: 0 auto;
 }
 
-.msg-row { display: flex; width: 100%; animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.msg-row.user { justify-content: flex-end; }
-.msg-row.ai { justify-content: flex-start; }
+.msg-row { display: flex; flex-direction: column; width: 100%; animation: slideIn 0.3s ease; }
+.msg-row.user { align-items: flex-end; }
+.msg-row.ai { align-items: flex-start; }
+
+.msg-meta {
+  font-family: 'JetBrains Mono'; font-size: 10px; color: #555; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.speak-btn { cursor: pointer; color: var(--neon-green); opacity: 0.7; }
+.speak-btn:hover { opacity: 1; }
 
 .msg-content {
-  /* Di Desktop jangan terlalu lebar, max 75% biar enak dibaca mata */
-  max-width: 75%; 
-  padding: 16px 22px; 
-  font-size: 15px; line-height: 1.6;
-  border-radius: 22px; position: relative;
-  word-wrap: break-word;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-  transition: transform 0.2s;
+  max-width: 88%; padding: 12px 18px; font-size: 15px; line-height: 1.6;
+  position: relative; backdrop-filter: blur(10px);
+  white-space: pre-wrap; word-wrap: break-word;
 }
-
-/* Efek subtle saat mouse hover pesan */
-.msg-content:hover { transform: scale(1.005); }
 
 .msg-row.user .msg-content {
-  background: var(--user-msg-bg); border: 1px solid var(--user-msg-border);
-  color: var(--text-main); border-bottom-right-radius: 4px;
+  background: var(--neon-dim); border: 1px solid var(--neon-green);
+  color: white; border-radius: 12px 12px 2px 12px;
 }
+
 .msg-row.ai .msg-content {
-  background: var(--ai-msg-bg); border: 1px solid var(--ai-msg-border);
-  color: var(--text-main); border-bottom-left-radius: 4px;
+  background: rgba(20, 20, 20, 0.9); border: 1px solid var(--border-light);
+  color: #ddd; border-radius: 12px 12px 12px 2px;
 }
 
-/* =========================================
-   6. IMAGE & MEDIA
-   ========================================= */
+/* --- MARKDOWN STYLES --- */
+strong { color: white; font-weight: 800; }
+
+.code-wrapper {
+  margin: 10px 0; border: 1px solid #333; border-radius: 6px; overflow: hidden;
+}
+.code-header {
+  background: #222; padding: 4px 10px; font-size: 10px; font-family: 'JetBrains Mono';
+  color: #888; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 6px;
+}
+.code-block {
+  background: #080808; padding: 12px; margin: 0; overflow-x: auto;
+}
+.code-block code {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #aaddff;
+}
+
+/* --- IMAGE GENERATION --- */
 .generated-image-container {
-  margin-top: 15px; border-radius: 16px; overflow: hidden;
-  border: 1px solid var(--hud-border); background: #000;
-  width: 100%; max-width: 450px; /* Limit lebar gambar di desktop */
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-  transition: transform 0.3s ease;
+  margin-top: 10px; border: 1px solid #333; background: #000;
+  border-radius: 8px; overflow: hidden; max-width: 280px;
+  transition: 0.3s; cursor: zoom-in;
 }
-.generated-image-container:hover { transform: translateY(-3px); box-shadow: 0 15px 50px rgba(0,0,0,0.4); }
-.generated-image { width: 100%; height: auto; display: block; object-fit: cover; }
-
+.generated-image-container:hover { border-color: var(--neon-green); transform: scale(1.02); }
+.generated-image { width: 100%; height: auto; display: block; }
 .img-controls {
-  padding: 12px 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px; background: #111; display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono'; font-size: 9px; color: #666;
 }
-.save-btn {
-  background: var(--accent-primary); color: #fff; border: none;
-  padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;
-  cursor: pointer; transition: all 0.2s;
-}
-.save-btn:hover { background: #ff3377; transform: scale(1.05); box-shadow: 0 0 15px var(--accent-primary); }
 
-/* =========================================
-   7. FOOTER & INPUT DOCK
-   ========================================= */
+.user-upload-preview img {
+  max-width: 150px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px;
+}
+
+/* --- FOOTER & INPUT --- */
 .hud-footer {
-  flex-shrink: 0;
-  padding: 20px 30px;
-  display: flex; flex-direction: column; gap: 15px; align-items: center;
-  z-index: 30;
+  flex-shrink: 0; background: #000; border-top: 1px solid #222;
 }
 
-.action-bar { display: flex; gap: 10px; }
-.ctrl-btn {
-  background: var(--hud-bg); border: 1px solid var(--hud-border);
-  color: var(--text-main); padding: 8px 18px; font-size: 13px; font-weight: 600;
-  border-radius: 24px; cursor: pointer; backdrop-filter: blur(var(--hud-blur));
-  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+.quick-actions {
+  display: flex; gap: 8px; padding: 10px 20px; overflow-x: auto;
+  background: #050505;
 }
-.ctrl-btn:hover { 
-  background: rgba(255,255,255,0.1); 
-  transform: translateY(-2px); 
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-  border-color: rgba(255,255,255,0.3);
+.quick-actions button {
+  background: rgba(255,255,255,0.05); border: 1px solid #333; color: #888;
+  padding: 6px 12px; font-size: 11px; font-family: 'JetBrains Mono';
+  cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.quick-actions button:hover { border-color: var(--neon-green); color: var(--neon-green); }
+.quick-actions button.danger:hover { border-color: var(--neon-danger); color: var(--neon-danger); }
+
+.input-area {
+  padding: 15px 20px; display: flex; gap: 10px; align-items: center;
+  max-width: 900px; width: 100%; margin: 0 auto;
 }
 
-.stop-btn:hover { background: rgba(255, 50, 50, 0.4); border-color: #ff5555; }
-.continue-btn:hover { background: rgba(50, 255, 100, 0.4); border-color: #55ff88; }
-
-.input-dock {
-  width: 100%; max-width: 700px; height: 60px;
-  background: var(--hud-bg); border: 1px solid var(--hud-border);
-  border-radius: 30px; display: flex; align-items: center; padding: 5px 10px;
-  backdrop-filter: blur(var(--hud-blur));
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-  transition: all 0.3s ease;
+.glass-input-wrapper {
+  flex: 1; display: flex; align-items: center;
+  background: #111; border: 1px solid #333;
+  border-radius: 8px; padding: 0 8px; transition: 0.3s;
 }
-.input-dock:focus-within {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 25px rgba(255, 0, 85, 0.15);
-  transform: scale(1.01);
-}
+.glass-input-wrapper:focus-within { border-color: var(--neon-green); box-shadow: 0 0 10px rgba(204,255,0,0.05); }
 
 .icon-btn {
-  background: transparent; border: none; font-size: 22px; cursor: pointer; 
-  padding: 0 15px; color: var(--text-dim); transition: all 0.2s;
+  background: transparent; border: none; color: #666;
+  padding: 10px; cursor: pointer; transition: 0.2s; display: flex;
 }
-.icon-btn:hover { color: var(--accent-primary); transform: scale(1.1); }
+.icon-btn:hover { color: var(--neon-green); }
+.icon-btn.active { color: var(--neon-danger); animation: pulse 1s infinite; }
 
-.input-dock input[type="text"] {
+.main-input {
   flex: 1; background: transparent; border: none;
-  color: var(--text-main); font-size: 16px; padding: 0 10px; outline: none;
+  color: white; font-family: 'Inter', sans-serif; font-size: 14px;
+  padding: 14px 10px; outline: none;
 }
 
 .send-btn {
-  background: var(--accent-primary); color: white; border: none;
-  width: 48px; height: 48px; border-radius: 50%; font-size: 18px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: var(--neon-green); color: black; border: none;
+  width: 48px; height: 48px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; cursor: pointer; transition: 0.2s;
 }
-.send-btn:hover:not(:disabled) { 
-  background: var(--accent-secondary); 
-  transform: rotate(-10deg) scale(1.1); 
-  box-shadow: 0 0 20px var(--accent-secondary);
-}
-.send-btn:active { transform: scale(0.9); }
+.send-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(204,255,0,0.3); }
+.send-btn.stop { background: #333; color: var(--neon-danger); }
 
-/* Mini Preview (Upload) */
-.mini-preview {
-  position: absolute; bottom: 80px; left: 20px;
-  width: 80px; height: 80px; border-radius: 12px;
-  border: 2px solid var(--accent-primary); background: #000;
-  z-index: 50; animation: popIn 0.3s ease;
-  cursor: default;
+/* --- LIGHTBOX --- */
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.95);
+  display: flex; justify-content: center; align-items: center;
 }
-.mini-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
-.remove-x {
-  position: absolute; top: -10px; right: -10px;
-  background: #ff0040; color: white; width: 24px; height: 24px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
+.lightbox-img {
+  max-width: 95vw; max-height: 90vh;
+  border: 1px solid var(--neon-green);
+  box-shadow: 0 0 50px rgba(204,255,0,0.2);
 }
-.remove-x:hover { transform: scale(1.2); }
 
-/* =========================================
-   8. ANIMATIONS & RESPONSIVE
-   ========================================= */
-@keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes blink { 50% { opacity: 0.5; } }
-@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-
-/* --- MOBILE & TABLET OPTIMIZATIONS --- */
-@media screen and (max-width: 768px) {
-  .ui-layer { max-width: 100%; } /* Full width di HP */
-  .hud-header { padding: 15px 15px; }
-  .status-text { display: none; }
-  .chat-feed { padding: 10px 15px; }
-  .msg-content { max-width: 88%; font-size: 14px; padding: 12px 16px; }
-  .input-dock { height: 50px; max-width: 100%; }
-  .send-btn { width: 40px; height: 40px; font-size: 16px; }
-  .icon-btn { font-size: 18px; padding: 0 10px; }
-  
-  /* Hilangkan efek hover berat di HP agar tidak lag */
-  .msg-content:hover, .generated-image-container:hover, .status-display:hover {
-    transform: none;
-    box-shadow: none; /* Kembalikan ke shadow default jika perlu */
-  }
+.loading-indicator {
+  color: #666; font-size: 20px; padding: 10px;
 }
+.loading-indicator span { animation: blink 1.4s infinite both; }
+.loading-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.loading-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
